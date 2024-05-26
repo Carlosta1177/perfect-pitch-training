@@ -1,7 +1,6 @@
 import streamlit as st
 import random
 import os
-import simpleaudio as sa
 
 # Directorio donde se encuentran los archivos .wav
 WAV_DIRECTORY = "wav"
@@ -29,10 +28,7 @@ available_notes = list(note_mapping.keys())
 def play_random_note():
     note_name = random.choice(available_notes)  # Seleccionar una nota al azar
     note_file = os.path.join(WAV_DIRECTORY, note_mapping[note_name])
-    wave_obj = sa.WaveObject.from_wave_file(note_file)
-    play_obj = wave_obj.play()
-    play_obj.wait_done()
-    return note_name
+    return note_name, open(note_file, "rb").read()
 
 # Función para verificar la respuesta del usuario
 def check_answer(user_input, correct_note):
@@ -48,7 +44,8 @@ if "note_played" not in st.session_state:
 
 # Botón para reproducir la nota
 if st.button("Reproducir nota"):
-    st.session_state.note_played = play_random_note()
+    st.session_state.note_played, audio_data = play_random_note()
+    st.audio(audio_data)
 
 # Selección de la respuesta del usuario
 if st.session_state.note_played:
@@ -61,3 +58,7 @@ if st.session_state.note_played:
                 st.write("¡Correcto! Has adivinado la nota correctamente.")
             else:
                 st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
+
+# Botón para volver a jugar
+if st.button("Volver a jugar"):
+    st.session_state.note_played = None
