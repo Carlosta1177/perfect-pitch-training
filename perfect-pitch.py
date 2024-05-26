@@ -58,7 +58,3 @@ if st.session_state.note_played:
                 st.write("¡Correcto! Has adivinado la nota correctamente.")
             else:
                 st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
-
-# Botón para volver a jugar
-if st.button("Volver a jugar"):
-    st.session_state.note_played = None
