@@ -1,10 +1,7 @@
 import streamlit as st
-import pygame.mixer
 import random
 import os
-
-# Inicializar pygame.mixer
-pygame.mixer.init()
+import simpleaudio as sa
 
 # Directorio donde se encuentran los archivos .wav
 WAV_DIRECTORY = "wav"
@@ -28,22 +25,14 @@ note_mapping = {
 # Lista de notas disponibles para adivinar
 available_notes = list(note_mapping.keys())
 
-# Variable de estado para la nota actual
-if "note_played" not in st.session_state:
-    st.session_state.note_played = None
-
 # Función para reproducir una nota aleatoria
 def play_random_note():
     note_name = random.choice(available_notes)  # Seleccionar una nota al azar
     note_file = os.path.join(WAV_DIRECTORY, note_mapping[note_name])
-    pygame.mixer.Sound(note_file).play()  # Reproducir el archivo de sonido
+    wave_obj = sa.WaveObject.from_wave_file(note_file)
+    play_obj = wave_obj.play()
+    play_obj.wait_done()
     return note_name
-
-# Función para reproducir la misma nota que la anterior
-def play_same_note():
-    if st.session_state.note_played:
-        note_file = os.path.join(WAV_DIRECTORY, note_mapping[st.session_state.note_played])
-        pygame.mixer.Sound(note_file).play()  # Reproducir el archivo de sonido
 
 # Función para verificar la respuesta del usuario
 def check_answer(user_input, correct_note):
@@ -53,14 +42,13 @@ def check_answer(user_input, correct_note):
 st.title("Adivina la nota")
 st.write("Escucha la nota y selecciona cuál crees que es.")
 
+# Variable de estado para la nota actual
+if "note_played" not in st.session_state:
+    st.session_state.note_played = None
+
 # Botón para reproducir la nota
 if st.button("Reproducir nota"):
     st.session_state.note_played = play_random_note()
-
-# Botón para volver a escuchar la misma nota
-if st.session_state.note_played:
-    if st.button("Volver a escuchar"):
-        play_same_note()
 
 # Selección de la respuesta del usuario
 if st.session_state.note_played:
@@ -73,5 +61,3 @@ if st.session_state.note_played:
                 st.write("¡Correcto! Has adivinado la nota correctamente.")
             else:
                 st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
-        else:
-            st.write("Por favor, selecciona una respuesta antes de adivinar.")
