@@ -51,36 +51,23 @@ def autoplay_audio(file_path: str):
 st.title("Adivina la nota")
 st.write("Escucha la nota y selecciona cuál crees que es.")
 
-# Variable de estado para la nota actual y el número de intentos
+# Variable de estado para la nota actual
 if "note_played" not in st.session_state:
     st.session_state.note_played = None
-    st.session_state.attempts = 0
 
-# Botón de inicio
-if st.button("Start"):
-    st.session_state.attempts = 0
+# Botón para reproducir la nota
+if st.button("Reproducir nota"):
+    st.session_state.note_played, note_file = play_random_note()
+    autoplay_audio(note_file)
 
-# Bucle para adivinar 10 notas consecutivas
-if st.session_state.attempts < 10:
-    if st.session_state.attempts > 0:
-        st.write(f"Intento {st.session_state.attempts} de 10")
-        st.session_state.note_played, note_file = play_random_note()
-        autoplay_audio(note_file)
-
-    # Selección de la respuesta del usuario
+# Selección de la respuesta del usuario
+if st.session_state.note_played:
     user_input = st.selectbox("¿Qué nota crees que se ha reproducido?", available_notes)
 
     # Verificar respuesta y mostrar resultado
     if st.button("Adivinar"):
         if user_input:
-            st.session_state.attempts += 1
             if check_answer(user_input, st.session_state.note_played):
                 st.write("¡Correcto! Has adivinado la nota correctamente.")
             else:
                 st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
-else:
-    # Mostrar pop-up con los resultados al finalizar los 10 intentos
-    st.write("¡Has completado los 10 intentos!")
-    st.write("Aquí está tu resultado:")
-    # Aquí puedes calcular el resultado final (por ejemplo, el número de respuestas correctas)
-    # y mostrarlo en el pop-up
