@@ -25,10 +25,6 @@ note_mapping = {
 # Lista de notas disponibles para adivinar
 available_notes = list(note_mapping.keys())
 
-# Leaderboard
-if "leaderboard" not in st.session_state:
-    st.session_state.leaderboard = []
-
 # Función para reproducir una nota aleatoria
 def play_random_note():
     note_name = random.choice(available_notes)  # Seleccionar una nota al azar
@@ -55,51 +51,23 @@ def autoplay_audio(file_path: str):
 st.title("Adivina la nota")
 st.write("Escucha la nota y selecciona cuál crees que es.")
 
-# Variable de estado para la nota actual y el contador de respuestas correctas
+# Variable de estado para la nota actual
 if "note_played" not in st.session_state:
     st.session_state.note_played = None
-if "score" not in st.session_state:
-    st.session_state.score = 0
-if "game_active" not in st.session_state:
-    st.session_state.game_active = False
 
-# Botón para iniciar la ronda
-if st.button("Iniciar ronda"):
-    st.session_state.game_active = True
-    st.session_state.score = 0
+# Botón para reproducir la nota
+if st.button("Reproducir nota"):
     st.session_state.note_played, note_file = play_random_note()
     autoplay_audio(note_file)
 
-# Juego activo
-if st.session_state.game_active:
-    # Botón para reproducir la nota
-    if st.button("Reproducir nota"):
-        st.session_state.note_played, note_file = play_random_note()
-        autoplay_audio(note_file)
+# Selección de la respuesta del usuario
+if st.session_state.note_played:
+    user_input = st.selectbox("¿Qué nota crees que se ha reproducido?", available_notes)
 
-    # Selección de la respuesta del usuario
-    if st.session_state.note_played:
-        user_input = st.selectbox("¿Qué nota crees que se ha reproducido?", available_notes)
-
-        # Verificar respuesta y mostrar resultado
-        if st.button("Adivinar"):
-            if user_input:
-                if check_answer(user_input, st.session_state.note_played):
-                    st.session_state.score += 1
-                    st.write("¡Correcto! Has adivinado la nota correctamente.")
-                    st.session_state.note_played, note_file = play_random_note()
-                    autoplay_audio(note_file)
-                else:
-                    st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
-                    st.write(f"Tu puntuación final es: {st.session_state.score}")
-                    st.session_state.game_active = False
-                    name = st.text_input("Introduce tu nombre para el leaderboard:")
-                    if st.button("Guardar puntuación"):
-                        st.session_state.leaderboard.append((name, st.session_state.score))
-                        st.session_state.leaderboard = sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)
-                        st.experimental_rerun()
-
-# Mostrar leaderboard
-st.write("Leaderboard:")
-for name, score in st.session_state.leaderboard:
-    st.write(f"{name}: {score}")
+    # Verificar respuesta y mostrar resultado
+    if st.button("Adivinar"):
+        if user_input:
+            if check_answer(user_input, st.session_state.note_played):
+                st.write("¡Correcto! Has adivinado la nota correctamente.")
+            else:
+                st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
