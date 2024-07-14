@@ -9,16 +9,16 @@ WAV_DIRECTORY = "wav"
 # Mapeo de nombres de notas a los nombres de archivos .wav
 note_mapping = {
     "Do": "c1.wav",
-    "Do#": "c1s.wav",
+    "Do#/Reb": "c1s.wav",
     "Re": "d1.wav",
-    "Re#": "d1s.wav",
+    "Re#/Mib": "d1s.wav",
     "Mi": "e1.wav",
     "Fa": "f1.wav",
-    "Fa#": "f1s.wav",
+    "Fa#/Solb": "f1s.wav",
     "Sol": "g1.wav",
-    "Sol#": "g1s.wav",
+    "Sol#/Lab": "g1s.wav",
     "La": "a1.wav",
-    "La#": "a1s.wav",
+    "La#/Sib": "a1s.wav",
     "Si": "b1.wav",
 }
 
