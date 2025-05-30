@@ -2,7 +2,6 @@ import streamlit as st
 import random
 import os
 import base64
-import uuid
 
 # Directorio donde se encuentran los archivos .wav
 WAV_DIRECTORY = "wav"
@@ -130,8 +129,10 @@ if "game_over" not in st.session_state:
     st.session_state.game_over = False
 if "leaderboard" not in st.session_state:
     st.session_state.leaderboard = []
-if "player_id" not in st.session_state:
-    st.session_state.player_id = str(uuid.uuid4())[:8]
+if "name_submitted" not in st.session_state:
+    st.session_state.name_submitted = False
+if "player_name" not in st.session_state:
+    st.session_state.player_name = ""
 
 # Layout con columnas para una mejor organización
 col1, col2 = st.columns([2, 1])
@@ -175,13 +176,24 @@ with col2:
     if st.session_state.leaderboard:
         st.subheader("🏆 Mejores Puntajes")
         for i, (player, score) in enumerate(sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5], 1):
-            st.write(f"{i}. Jugador {player}: {score} puntos")
+            st.write(f"{i}. {player}: {score} puntos")
 
-# Mostrar resultado final y confetti si el puntaje es alto
-if st.session_state.game_over:
+# Mostrar resultado final y solicitar nombre
+if st.session_state.game_over and not st.session_state.name_submitted:
     st.markdown(f'<div class="score-animation">¡Juego terminado! Tu puntaje final es: {st.session_state.score}/100</div>', unsafe_allow_html=True)
-    st.session_state.leaderboard.append((st.session_state.player_id, st.session_state.score))
-    
+    player_name = st.text_input("Ingresa tu nombre para la tabla de ganadores:")
+    if st.button("Guardar puntaje"):
+        if player_name.strip():
+            st.session_state.player_name = player_name.strip()
+            st.session_state.leaderboard.append((st.session_state.player_name, st.session_state.score))
+            st.session_state.name_submitted = True
+            st.rerun()
+        else:
+            st.error("Por favor, ingresa un nombre válido.")
+
+# Mostrar resultado final con confetti si el puntaje es alto
+if st.session_state.game_over and st.session_state.name_submitted:
+    st.markdown(f'<div class="score-animation">¡Juego terminado, {st.session_state.player_name}! Tu puntaje final es: {st.session_state.score}/100</div>', unsafe_allow_html=True)
     if st.session_state.score >= 80:
         st.markdown("""
             <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
@@ -199,5 +211,6 @@ if st.session_state.game_over:
         st.session_state.score = 0
         st.session_state.note_played = None
         st.session_state.game_over = False
-        st.session_state.player_id = str(uuid.uuid4())[:8]
+        st.session_state.name_submitted = False
+        st.session_state.player_name = ""
         st.rerun()
