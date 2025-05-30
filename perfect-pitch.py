@@ -25,9 +25,26 @@ note_mapping = {
 # Lista de notas disponibles para adivinar
 available_notes = list(note_mapping.keys())
 
-# Función para reproducir una nota aleatoria
+# Función para cargar o inicializar el leaderboard (persistente)
+@st.cache_data
+def get_leaderboard():
+    return []
+
+# Función para actualizar el leaderboard
+def update_leaderboard(player_name, score):
+    leaderboard = get_leaderboard()
+    leaderboard.append((player_name, score))
+    get_leaderboard._cache[0] = leaderboard  # Actualizar la caché directamente
+
+# Función para reproducir una nota aleatoria, evitando repetición consecutiva
 def play_random_note():
-    note_name = random.choice(available_notes)
+    if "last_note" in st.session_state and st.session_state.last_note:
+        # Excluir la última nota jugada
+        possible_notes = [note for note in available_notes if note != st.session_state.last_note]
+    else:
+        possible_notes = available_notes
+    note_name = random.choice(possible_notes)
+    st.session_state.last_note = note_name  # Guardar la nota actual como última
     note_file = os.path.join(WAV_DIRECTORY, note_mapping[note_name])
     return note_name, note_file
 
@@ -121,14 +138,14 @@ st.markdown('<div class="subtitle">Escucha la nota y selecciona cuál crees que 
 # Inicializar variables de estado
 if "note_played" not in st.session_state:
     st.session_state.note_played = None
+if "last_note" not in st.session_state:
+    st.session_state.last_note = None
 if "round" not in st.session_state:
     st.session_state.round = 0
 if "score" not in st.session_state:
     st.session_state.score = 0
 if "game_over" not in st.session_state:
     st.session_state.game_over = False
-if "leaderboard" not in st.session_state:
-    st.session_state.leaderboard = []
 if "name_submitted" not in st.session_state:
     st.session_state.name_submitted = False
 if "player_name" not in st.session_state:
@@ -173,9 +190,10 @@ with col1:
 
 with col2:
     # Mostrar leaderboard
-    if st.session_state.leaderboard:
+    leaderboard = get_leaderboard()
+    if leaderboard:
         st.subheader("🏆 Mejores Puntajes")
-        for i, (player, score) in enumerate(sorted(st.session_state.leaderboard, key=lambda x: x[1], reverse=True)[:5], 1):
+        for i, (player, score) in enumerate(sorted(leaderboard, key=lambda x: x[1], reverse=True)[:5], 1):
             st.write(f"{i}. {player}: {score} puntos")
 
 # Mostrar resultado final y solicitar nombre
@@ -185,7 +203,7 @@ if st.session_state.game_over and not st.session_state.name_submitted:
     if st.button("Guardar puntaje"):
         if player_name.strip():
             st.session_state.player_name = player_name.strip()
-            st.session_state.leaderboard.append((st.session_state.player_name, st.session_state.score))
+            update_leaderboard(st.session_state.player_name, st.session_state.score)
             st.session_state.name_submitted = True
             st.rerun()
         else:
@@ -210,6 +228,7 @@ if st.session_state.game_over and st.session_state.name_submitted:
         st.session_state.round = 0
         st.session_state.score = 0
         st.session_state.note_played = None
+        st.session_state.last_note = None
         st.session_state.game_over = False
         st.session_state.name_submitted = False
         st.session_state.player_name = ""
