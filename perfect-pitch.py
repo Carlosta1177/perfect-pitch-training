@@ -35,7 +35,7 @@ def play_random_note():
 def check_answer(user_input, correct_note):
     return user_input.lower() == correct_note.lower()
 
-# Función para reproducir audio automáticamente
+# Función para reproducar audio automáticamente
 def autoplay_audio(file_path: str):
     with open(file_path, "rb") as f:
         data = f.read()
@@ -49,25 +49,54 @@ def autoplay_audio(file_path: str):
 
 # Configuración de la aplicación Streamlit
 st.title("Adivina la nota")
-st.write("Escucha la nota y selecciona cuál crees que es.")
+st.write("Escucha la nota y selecciona cuál crees que es. Juega 10 rondas y acumula puntos (10 puntos por respuesta correcta).")
 
-# Variable de estado para la nota actual
+# Inicializar variables de estado
 if "note_played" not in st.session_state:
     st.session_state.note_played = None
+if "round" not in st.session_state:
+    st.session_state.round = 0
+if "score" not in st.session_state:
+    st.session_state.score = 0
+if "game_over" not in st.session_state:
+    st.session_state.game_over = False
 
-# Botón para reproducir la nota
-if st.button("Reproducir nota"):
-    st.session_state.note_played, note_file = play_random_note()
-    autoplay_audio(note_file)
+# Botón para iniciar o continuar el juego
+if not st.session_state.game_over:
+    if st.button("Reproducir nota" if st.session_state.round == 0 else "Siguiente nota"):
+        if st.session_state.round < 10:
+            st.session_state.round += 1
+            st.session_state.note_played, note_file = play_random_note()
+            autoplay_audio(note_file)
+        else:
+            st.session_state.game_over = True
 
-# Selección de la respuesta del usuario
-if st.session_state.note_played:
-    user_input = st.selectbox("¿Qué nota crees que se ha reproducido?", available_notes)
+# Mostrar ronda actual y puntaje
+if st.session_state.round > 0 and not st.session_state.game_over:
+    st.write(f"Ronda {st.session_state.round}/10 | Puntaje: {st.session_state.score}")
 
-    # Verificar respuesta y mostrar resultado
+# Selección de la respuesta del usuario y verificación
+if st.session_state.note_played and not st.session_state.game_over:
+    user_input = st.selectbox("¿Qué nota crees que se ha reproducido?", available_notes, key=f"select_{st.session_state.round}")
+
     if st.button("Adivinar"):
         if user_input:
             if check_answer(user_input, st.session_state.note_played):
-                st.write("¡Correcto! Has adivinado la nota correctamente.")
+                st.session_state.score += 10
+                st.write("¡Correcto! Has adivinado la nota correctamente. +10 puntos.")
             else:
                 st.write(f"Incorrecto. La nota correcta era '{st.session_state.note_played}'.")
+            if st.session_state.round < 10:
+                st.write("Haz clic en 'Siguiente nota' para continuar.")
+            else:
+                st.session_state.game_over = True
+
+# Mostrar resultado final
+if st.session_state.game_over:
+    st.write(f"¡Juego terminado! Tu puntaje final es: {st.session_state.score}/100")
+    if st.button("Jugar de nuevo"):
+        st.session_state.round = 0
+        st.session_state.score = 0
+        st.session_state.note_played = None
+        st.session_state.game_over = False
+        st.rerun()
