@@ -1,2 +1,2 @@
 streamlit
-plt
+matplotlib.pyplot
