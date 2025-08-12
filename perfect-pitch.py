@@ -8,8 +8,33 @@ import os
 # -------------------------------
 # CONFIGURACIÓN INICIAL
 # -------------------------------
-st.set_page_config(page_title="🎵 Entrenador Auditivo Pro", layout="centered")
+st.set_page_config(
+    page_title="🎵 Entrenador Auditivo Pro",
+    layout="wide",
+    initial_sidebar_state="expanded",
+    menu_items={
+        'Get Help': 'https://www.example.com/help',
+        'Report a bug': 'https://www.example.com/bug',
+        'About': "### Entrenador Auditivo Pro - ¡Mejora tu oído musical!"
+    }
+)
 st.title("🎧 Entrenador Auditivo Pro con IA Adaptativa")
+
+# Sidebar for settings and instructions
+with st.sidebar:
+    st.header("Configuración")
+    max_attempts = st.selectbox("Número de rondas:", [5, 10, 15, 20, 50], index=1)
+    st.markdown("---")
+    st.header("Instrucciones")
+    st.markdown("""
+    - Selecciona la dificultad y el número de rondas.
+    - Escucha la nota haciendo clic en el botón de reproducción del audio.
+    - Elige la nota que crees que es del menú desplegable.
+    - Envía tu respuesta y ve tu progreso.
+    - Al final, ingresa tu nombre para la tabla de líderes.
+    """)
+    st.markdown("---")
+    st.caption("Desarrollado con ❤️ por [Tu Nombre o xAI]")
 
 # -------------------------------
 # VARIABLES DE SESIÓN
@@ -36,9 +61,9 @@ if "feedback_message" not in st.session_state:
 # -------------------------------
 # FUNCIONES
 # -------------------------------
-NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"]
+NOTAS = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B", "C2"]
 
-# Map note names to .wav filenames
+# Map note names to .wav filenames (added C2)
 NOTE_TO_FILE = {
     "C": "c1.wav",
     "C#": "c1s.wav",
@@ -51,7 +76,8 @@ NOTE_TO_FILE = {
     "G#": "g1s.wav",
     "A": "a1.wav",
     "A#": "a1s.wav",
-    "B": "b1.wav"
+    "B": "b1.wav",
+    "C2": "c2.wav"
 }
 
 def generar_nota(dificultad):
@@ -60,7 +86,7 @@ def generar_nota(dificultad):
     elif dificultad == "Media":
         return random.choice(NOTAS[:10])  # C to A
     else:
-        return random.choice(NOTAS)  # All notes
+        return random.choice(NOTAS)  # All notes, including C2
 
 def reproducir_nota(nota):
     try:
@@ -70,14 +96,17 @@ def reproducir_nota(nota):
             return
         file_path = os.path.join("wav", file_name)
         if os.path.exists(file_path):
-            st.audio(file_path, format="audio/wav")
+            st.audio(file_path, format="audio/wav", autoplay=True)  # Autoplay for better UX, browsers may block
         else:
             st.error(f"❌ Error: El archivo {file_path} no existe")
     except Exception as e:
         st.error(f"❌ Error al reproducir la nota {nota}: {str(e)}")
 
 def evaluar_respuesta(respuesta, nota_correcta):
-    return respuesta == nota_correcta  # Direct comparison since selectbox ensures valid input
+    # Support flats as equivalents
+    flat_to_sharp = {"Db": "C#", "Eb": "D#", "Gb": "F#", "Ab": "G#", "Bb": "A#"}
+    respuesta_normalized = flat_to_sharp.get(respuesta, respuesta)
+    return respuesta_normalized == nota_correcta
 
 def resetear_juego():
     st.session_state.score = 0
@@ -96,12 +125,14 @@ def mostrar_progreso():
     st.subheader("📈 Progreso del Usuario")
     intentos = list(range(1, len(st.session_state.history) + 1))
     aciertos = [1 if correcto else 0 for _, _, correcto in st.session_state.history]
-    plt.figure()
-    plt.plot(intentos, np.cumsum(aciertos), marker='o', color='#1f77b4')
-    plt.xlabel("Intentos")
-    plt.ylabel("Aciertos acumulados")
-    plt.title("Evolución del rendimiento")
-    st.pyplot(plt)
+    fig, ax = plt.subplots()
+    ax.plot(intentos, np.cumsum(aciertos), marker='o', color='#1f77b4')
+    ax.set_xlabel("Intentos")
+    ax.set_ylabel("Aciertos acumulados")
+    ax.set_title("Evolución del rendimiento")
+    st.pyplot(fig)
+    # Add table for accessibility
+    st.table({"Intento": intentos, "Acierto": aciertos})
 
 # -------------------------------
 # INTERFAZ DE USUARIO
@@ -110,79 +141,98 @@ if not st.session_state.subscription:
     st.warning("🔒 Esta funcionalidad está disponible solo para usuarios con suscripción activa.")
     st.stop()
 
-st.subheader("🎼 Escucha la nota y adivina cuál es")
-dificultad = st.selectbox("Selecciona la dificultad:", ["Fácil", "Media", "Difícil"])
+# Main content in columns for better layout
+col1, col2 = st.columns([2, 1])
 
-# Guía para el formato de las notas
-st.markdown("""
-**Guía para las notas**: Selecciona la nota que escuches desde el menú desplegable. Las notas sostenidas (sharps) se indican con `#` (ej. `C#` para Do sostenido). Las notas bemoles (flats) son equivalentes a las sostenidas (ej. `Db` es lo mismo que `C#`). Ejemplos:
-- `C`: Do
-- `C#` o `Db`: Do sostenido / Re bemol
-- `D`: Re
-- `D#` o `Eb`: Re sostenido / Mi bemol
-""")
+with col1:
+    st.subheader("🎼 Escucha la nota y adivina cuál es")
+    dificultad = st.selectbox("Selecciona la dificultad:", ["Fácil", "Media", "Difícil"])
 
-if not st.session_state.game_over:
-    if st.session_state.nota_actual is None:
-        st.session_state.nota_actual = generar_nota(dificultad)
+    # Guía para el formato de las notas (updated to include flats support)
+    st.info("""
+    **Guía para las notas**: Selecciona la nota que escuches desde el menú desplegable. Las notas sostenidas (sharps) se indican con `#` (ej. `C#` para Do sostenido). Puedes usar bemoles (flats) como equivalentes (ej. `Db` para `C#`). Ejemplos:
+    - `C`: Do
+    - `C#` o `Db`: Do sostenido / Re bemol
+    - `D`: Re
+    - `D#` o `Eb`: Re sostenido / Mi bemol
+    - `C2`: Do en octava superior
+    """)
 
-    if st.button("🎵 Reproducir Nota", key="play_note"):
+    if not st.session_state.game_over:
+        if st.session_state.nota_actual is None:
+            st.session_state.nota_actual = generar_nota(dificultad)
+
         reproducir_nota(st.session_state.nota_actual)
 
-    reproducir_nota(st.session_state.nota_actual)
-
-    # Display feedback if it exists
-    if st.session_state.feedback_message:
-        if "Correcto" in st.session_state.feedback_message:
-            st.success(st.session_state.feedback_message)
-        else:
-            st.error(st.session_state.feedback_message)
-
-    # Use selectbox instead of text_input
-    respuesta = st.selectbox("¿Qué nota escuchaste?", options=[""] + NOTAS, key=f"respuesta_{st.session_state.attempts}")
-    if st.button("Enviar respuesta"):
-        if respuesta:  # Ensure a note is selected
-            st.session_state.attempts += 1
-            correcta = evaluar_respuesta(respuesta, st.session_state.nota_actual)
-            if correcta:
-                st.session_state.feedback_message = "✅ ¡Correcto!"
-                st.session_state.score += 10
+        # Display feedback if it exists
+        if st.session_state.feedback_message:
+            if "Correcto" in st.session_state.feedback_message:
+                st.success(st.session_state.feedback_message)
             else:
-                st.session_state.feedback_message = f"❌ Incorrecto. Era {st.session_state.nota_actual}"
-            st.session_state.history.append((st.session_state.nota_actual, respuesta, correcta))
-            st.session_state.nota_actual = None
-            if st.session_state.attempts >= 10:
-                st.session_state.game_over = True
-            time.sleep(1)  # Delay to show feedback
-            st.rerun()
-        else:
-            st.warning("Por favor, selecciona una nota antes de enviar.")
+                st.error(st.session_state.feedback_message)
 
-# -------------------------------
-# RESULTADO FINAL Y LEADERBOARD
-# -------------------------------
-if st.session_state.game_over:
-    st.markdown(f"### 🏁 Juego Terminado - Puntaje Final: {st.session_state.score}/100")
-    if not st.session_state.player_name:
-        nombre = st.text_input("Ingresa tu nombre para la tabla de ganadores:")
-        if st.button("Guardar Puntaje"):
-            if nombre.strip():
-                st.session_state.player_name = nombre.strip()
-                guardar_en_leaderboard(nombre.strip(), st.session_state.score)
-                st.success("✅ Puntaje guardado")
-                time.sleep(1)
+        # Progress bar
+        st.progress(st.session_state.attempts / max_attempts)
+
+        # Use selectbox with flats included
+        NOTAS_WITH_FLATS = ["C", "C#", "Db", "D", "D#", "Eb", "E", "F", "F#", "Gb", "G", "G#", "Ab", "A", "A#", "Bb", "B", "C2"]
+        respuesta = st.selectbox("¿Qué nota escuchaste?", options=[""] + sorted(set(NOTAS_WITH_FLATS)), key=f"respuesta_{st.session_state.attempts}")
+        if st.button("Enviar respuesta"):
+            if respuesta:
+                st.session_state.attempts += 1
+                correcta = evaluar_respuesta(respuesta, st.session_state.nota_actual)
+                if correcta:
+                    st.session_state.feedback_message = "✅ ¡Correcto!"
+                    st.session_state.score += 10
+                    st.balloons()  # Fun effect on correct
+                else:
+                    st.session_state.feedback_message = f"❌ Incorrecto. Era {st.session_state.nota_actual}"
+                st.session_state.history.append((st.session_state.nota_actual, respuesta, correcta))
+                st.session_state.nota_actual = None
+                if st.session_state.attempts >= max_attempts:
+                    st.session_state.game_over = True
+                time.sleep(2)  # Longer delay for feedback visibility
                 st.rerun()
-    else:
-        st.subheader("🏆 Tabla de Ganadores")
-        if st.session_state.leaderboard:
-            for i, (player, score) in enumerate(st.session_state.leaderboard, 1):
-                st.markdown(
-                    f'<div class="p-2 rounded bg-white shadow mb-1"><strong>{i}. {player}</strong>: {score} puntos</div>',
-                    unsafe_allow_html=True
-                )
+            else:
+                st.warning("Por favor, selecciona una nota antes de enviar.")
+
+with col2:
+    if st.session_state.game_over:
+        st.markdown(f"### 🏁 Juego Terminado - Puntaje Final: {st.session_state.score}/{max_attempts * 10}")
+        if not st.session_state.player_name:
+            nombre = st.text_input("Ingresa tu nombre para la tabla de ganadores:")
+            if st.button("Guardar Puntaje"):
+                if nombre.strip():
+                    st.session_state.player_name = nombre.strip()
+                    guardar_en_leaderboard(nombre.strip(), st.session_state.score)
+                    st.success("✅ Puntaje guardado")
+                    time.sleep(1)
+                    st.rerun()
         else:
-            st.info("Aún no hay puntajes registrados.")
-        mostrar_progreso()
-        if st.button("🔁 Jugar de nuevo", key="play_again"):
-            resetear_juego()
-            st.rerun()
+            st.subheader("🏆 Tabla de Ganadores")
+            if st.session_state.leaderboard:
+                for i, (player, score) in enumerate(st.session_state.leaderboard, 1):
+                    st.markdown(
+                        f'<div style="padding: 10px; border-radius: 5px; background-color: #f0f2f6; margin-bottom: 5px;"><strong>{i}. {player}</strong>: {score} puntos</div>',
+                        unsafe_allow_html=True
+                    )
+            else:
+                st.info("Aún no hay puntajes registrados.")
+            mostrar_progreso()
+            if st.button("🔁 Jugar de nuevo", key="play_again"):
+                resetear_juego()
+                st.rerun()
+
+# Custom CSS for better styling
+st.markdown("""
+<style>
+    .stButton > button {
+        width: 100%;
+        background-color: #4CAF50;
+        color: white;
+    }
+    .stSelectbox {
+        background-color: #f0f2f6;
+    }
+</style>
+""", unsafe_allow_html=True)
