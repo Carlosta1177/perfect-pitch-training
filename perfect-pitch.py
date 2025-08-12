@@ -48,10 +48,12 @@ def evaluar_respuesta(respuesta, nota_correcta):
     return respuesta.upper().strip() == nota_correcta
 
 def resetear_juego():
+    # Reset all relevant session state variables
     st.session_state.score = 0
     st.session_state.attempts = 0
     st.session_state.game_over = False
     st.session_state.history = []
+    st.session_state.player_name = ""  # Reset player name to prompt for new input
 
 def guardar_en_leaderboard(nombre, puntaje):
     st.session_state.leaderboard.append((nombre, puntaje))
@@ -59,9 +61,10 @@ def guardar_en_leaderboard(nombre, puntaje):
 
 def mostrar_progreso():
     st.subheader("📈 Progreso del Usuario")
-    intentos = list(range(1, len(st.session_state.history)+1))
+    intentos = list(range(1, len(st.session_state.history) + 1))
     aciertos = [1 if correcto else 0 for _, _, correcto in st.session_state.history]
-    plt.plot(intentos, np.cumsum(aciertos), marker='o')
+    plt.figure()  # Create a new figure to avoid reusing old plots
+    plt.plot(intentos, np.cumsum(aciertos), marker='o', color='#1f77b4')  # Distinct color for visibility
     plt.xlabel("Intentos")
     plt.ylabel("Aciertos acumulados")
     plt.title("Evolución del rendimiento")
@@ -75,15 +78,12 @@ if not st.session_state.subscription:
     st.stop()
 
 st.subheader("🎼 Escucha la nota y adivina cuál es")
-
 dificultad = st.selectbox("Selecciona la dificultad:", ["Fácil", "Media", "Difícil"])
 
 if not st.session_state.game_over:
     nota_actual = generar_nota(dificultad)
     reproducir_nota(nota_actual)
-
     respuesta = st.text_input("¿Qué nota escuchaste?", key=f"respuesta_{st.session_state.attempts}")
-
     if st.button("Enviar respuesta"):
         st.session_state.attempts += 1
         correcta = evaluar_respuesta(respuesta, nota_actual)
@@ -93,18 +93,15 @@ if not st.session_state.game_over:
         else:
             st.error(f"❌ Incorrecto. Era {nota_actual}")
         st.session_state.history.append((nota_actual, respuesta, correcta))
-
         if st.session_state.attempts >= 10:
             st.session_state.game_over = True
-        else:
-            st.rerun()
+        st.rerun()
 
 # -------------------------------
 # RESULTADO FINAL Y LEADERBOARD
 # -------------------------------
 if st.session_state.game_over:
     st.markdown(f"### 🏁 Juego Terminado - Puntaje Final: {st.session_state.score}/100")
-
     if not st.session_state.player_name:
         nombre = st.text_input("Ingresa tu nombre para la tabla de ganadores:")
         if st.button("Guardar Puntaje"):
@@ -124,10 +121,7 @@ if st.session_state.game_over:
                 )
         else:
             st.info("Aún no hay puntajes registrados.")
-
         mostrar_progreso()
-
-        if st.button("🔁 Jugar de nuevo"):
+        if st.button("🔁 Jugar de nuevo", key="play_again"):
             resetear_juego()
             st.rerun()
-
