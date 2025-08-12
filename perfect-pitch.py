@@ -329,9 +329,6 @@ with col2:
 # Custom CSS with dark gray theme
 st.markdown("""
 <style>
-    .stApp {
-        background-color: #1a1a1a;
-    }
     .stButton > button {
         width: 100%;
         background-color: #4a704a;
