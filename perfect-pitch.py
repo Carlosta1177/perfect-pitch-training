@@ -213,8 +213,8 @@ def mostrar_progreso():
     ax.set_xlabel("Intentos" if lang == "Español" else "Attempts")
     ax.set_ylabel("Aciertos acumulados" if lang == "Español" else "Cumulative Correct")
     ax.set_title("Evolución del rendimiento" if lang == "Español" else "Performance Progress")
-    # Accessibility: Add caption for screen readers
-    st.pyplot(fig, caption="Gráfico de progreso de aciertos" if lang == "Español" else "Progress chart of correct answers")
+    st.pyplot(fig)  # Removed invalid caption parameter
+    st.caption("Gráfico de progreso de aciertos" if lang == "Español" else "Progress chart of correct answers")  # Added as separate caption
     # Accessibility: Table of results
     st.table({"Intento" if lang == "Español" else "Attempt": intentos, "Acierto" if lang == "Español" else "Correct": aciertos})
     # Missed notes summary
