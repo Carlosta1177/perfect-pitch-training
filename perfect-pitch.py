@@ -337,7 +337,7 @@ st.markdown("""
         padding: 10px;
     }
     .stSelectbox {
-        background-color: #b6becf;
+        background-color: #494130;
         border-radius: 5px;
     }
     .stProgress > div > div {
