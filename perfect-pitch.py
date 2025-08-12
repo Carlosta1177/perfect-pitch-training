@@ -209,12 +209,12 @@ def mostrar_progreso():
     intentos = list(range(1, len(st.session_state.history) + 1))
     aciertos = [1 if correcto else 0 for _, _, correcto in st.session_state.history]
     fig, ax = plt.subplots()
-    ax.plot(intentos, np.cumsum(aciertos), marker='o', color='#1f77b4')
+    ax.plot(intentos, np.cumsum(aciertos), marker='o', color='#d3d3d3')  # Light gray for contrast
     ax.set_xlabel("Intentos" if lang == "Español" else "Attempts")
     ax.set_ylabel("Aciertos acumulados" if lang == "Español" else "Cumulative Correct")
     ax.set_title("Evolución del rendimiento" if lang == "Español" else "Performance Progress")
-    fig.canvas.set_window_title("Progress Chart")  # For screen readers
-    st.pyplot(fig)
+    # Accessibility: Add caption for screen readers
+    st.pyplot(fig, caption="Gráfico de progreso de aciertos" if lang == "Español" else "Progress chart of correct answers")
     # Accessibility: Table of results
     st.table({"Intento" if lang == "Español" else "Attempt": intentos, "Acierto" if lang == "Español" else "Correct": aciertos})
     # Missed notes summary
@@ -316,7 +316,7 @@ with col2:
             if st.session_state.leaderboard:
                 for i, (player, score) in enumerate(st.session_state.leaderboard, 1):
                     st.markdown(
-                        f'<div style="padding: 10px; border-radius: 5px; background-color: #e0e7ff; margin-bottom: 5px; color: #1f2a44;"><strong>{i}. {player}</strong>: {score} puntos</div>',
+                        f'<div style="padding: 10px; border-radius: 5px; background-color: #2f2f2f; color: #d3d3d3;"><strong>{i}. {player}</strong>: {score} puntos</div>',
                         unsafe_allow_html=True
                     )
             else:
@@ -326,37 +326,42 @@ with col2:
                 resetear_juego()
                 st.rerun()
 
-# Custom CSS for styling and accessibility
+# Custom CSS with dark gray theme
 st.markdown("""
 <style>
+    .stApp {
+        background-color: #1a1a1a;
+    }
     .stButton > button {
         width: 100%;
-        background-color: #4CAF50;
-        color: white;
+        background-color: #4a704a;
+        color: #d3d3d3;
         border-radius: 5px;
         padding: 10px;
+        border: none;
     }
     .stSelectbox {
-        background-color: #191919;
+        background-color: #2f2f2f;
+        color: #d3d3d3;
         border-radius: 5px;
     }
     .stProgress > div > div {
-        background-color: #4CAF50;
+        background-color: #4a704a;
     }
     .feedback.success {
-        background-color: #d4edda;
-        color: #155724;
+        background-color: #2f4f2f;
+        color: #d3d3d3;
         padding: 10px;
         border-radius: 5px;
-        border: 1px solid #c3e6cb;
+        border: 1px solid #4a704a;
         animation: fadeInOut 1.5s;
     }
     .feedback.error {
-        background-color: #f8d7da;
-        color: #721c24;
+        background-color: #4f2f2f;
+        color: #d3d3d3;
         padding: 10px;
         border-radius: 5px;
-        border: 1px solid #f5c6cb;
+        border: 1px solid #704a4a;
         animation: fadeInOut 1.5s;
     }
     @keyframes fadeInOut {
@@ -366,7 +371,11 @@ st.markdown("""
         100% { opacity: 0; }
     }
     .stMarkdown h1, .stMarkdown h2, .stMarkdown h3 {
-        color: #1f2a44 !important;
+        color: #d3d3d3 !important;
+    }
+    .stInfo {
+        background-color: #2f2f2f;
+        color: #d3d3d3;
     }
     /* Mobile responsiveness */
     @media (max-width: 600px) {
