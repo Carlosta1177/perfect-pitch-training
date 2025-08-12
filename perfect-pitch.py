@@ -239,7 +239,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(TEXTS[st.session_state.language]["instructions"])
     st.markdown("---")
-    st.caption("Desarrollado con ❤️ por [Tu Nombre o xAI]" if st.session_state.language == "Español" else "Developed with ❤️ by Carlos T.A.")
+    st.caption("Desarrollado con ❤️ por Carlos T.A." if st.session_state.language == "Español" else "Developed with ❤️ by Carlos T.A.")
 
 # Main content
 col1, col2 = st.columns([2, 1])
