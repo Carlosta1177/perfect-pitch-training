@@ -11,7 +11,7 @@ from pathlib import Path
 # CONFIGURACIÓN INICIAL
 # -------------------------------
 st.set_page_config(
-    page_title="🎵 Entrenador Auditivo Pro",
+    page_title="🎵 Perfect Pitch Test",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
@@ -20,7 +20,7 @@ st.set_page_config(
         'About': "### Entrenador Auditivo Pro - ¡Mejora tu oído musical!"
     }
 )
-st.title("🎧 Entrenador Auditivo Pro con IA Adaptativa")
+st.title("🎧 Perfect Pitch Test")
 
 # -------------------------------
 # VARIABLES DE SESIÓN
