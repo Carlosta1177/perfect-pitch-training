@@ -30,6 +30,8 @@ if "subscription" not in st.session_state:
     st.session_state.subscription = True  # Simulación de suscripción activa
 if "nota_actual" not in st.session_state:
     st.session_state.nota_actual = None
+if "feedback_message" not in st.session_state:
+    st.session_state.feedback_message = None  # Store feedback message
 
 # -------------------------------
 # FUNCIONES
@@ -75,7 +77,7 @@ def reproducir_nota(nota):
         st.error(f"❌ Error al reproducir la nota {nota}: {str(e)}")
 
 def evaluar_respuesta(respuesta, nota_correcta):
-    return respuesta.upper().strip() == nota_correcta
+    return respuesta == nota_correcta  # Direct comparison since selectbox ensures valid input
 
 def resetear_juego():
     st.session_state.score = 0
@@ -84,6 +86,7 @@ def resetear_juego():
     st.session_state.history = []
     st.session_state.player_name = ""
     st.session_state.nota_actual = None
+    st.session_state.feedback_message = None
 
 def guardar_en_leaderboard(nombre, puntaje):
     st.session_state.leaderboard.append((nombre, puntaje))
@@ -110,6 +113,15 @@ if not st.session_state.subscription:
 st.subheader("🎼 Escucha la nota y adivina cuál es")
 dificultad = st.selectbox("Selecciona la dificultad:", ["Fácil", "Media", "Difícil"])
 
+# Guía para el formato de las notas
+st.markdown("""
+**Guía para las notas**: Selecciona la nota que escuches desde el menú desplegable. Las notas sostenidas (sharps) se indican con `#` (ej. `C#` para Do sostenido). Las notas bemoles (flats) son equivalentes a las sostenidas (ej. `Db` es lo mismo que `C#`). Ejemplos:
+- `C`: Do
+- `C#` o `Db`: Do sostenido / Re bemol
+- `D`: Re
+- `D#` o `Eb`: Re sostenido / Mi bemol
+""")
+
 if not st.session_state.game_over:
     if st.session_state.nota_actual is None:
         st.session_state.nota_actual = generar_nota(dificultad)
@@ -119,20 +131,32 @@ if not st.session_state.game_over:
 
     reproducir_nota(st.session_state.nota_actual)
 
-    respuesta = st.text_input("¿Qué nota escuchaste?", key=f"respuesta_{st.session_state.attempts}")
-    if st.button("Enviar respuesta"):
-        st.session_state.attempts += 1
-        correcta = evaluar_respuesta(respuesta, st.session_state.nota_actual)
-        if correcta:
-            st.success("✅ ¡Correcto!")
-            st.session_state.score += 10
+    # Display feedback if it exists
+    if st.session_state.feedback_message:
+        if "Correcto" in st.session_state.feedback_message:
+            st.success(st.session_state.feedback_message)
         else:
-            st.error(f"❌ Incorrecto. Era {st.session_state.nota_actual}")
-        st.session_state.history.append((st.session_state.nota_actual, respuesta, correcta))
-        st.session_state.nota_actual = None
-        if st.session_state.attempts >= 10:
-            st.session_state.game_over = True
-        st.rerun()
+            st.error(st.session_state.feedback_message)
+
+    # Use selectbox instead of text_input
+    respuesta = st.selectbox("¿Qué nota escuchaste?", options=[""] + NOTAS, key=f"respuesta_{st.session_state.attempts}")
+    if st.button("Enviar respuesta"):
+        if respuesta:  # Ensure a note is selected
+            st.session_state.attempts += 1
+            correcta = evaluar_respuesta(respuesta, st.session_state.nota_actual)
+            if correcta:
+                st.session_state.feedback_message = "✅ ¡Correcto!"
+                st.session_state.score += 10
+            else:
+                st.session_state.feedback_message = f"❌ Incorrecto. Era {st.session_state.nota_actual}"
+            st.session_state.history.append((st.session_state.nota_actual, respuesta, correcta))
+            st.session_state.nota_actual = None
+            if st.session_state.attempts >= 10:
+                st.session_state.game_over = True
+            time.sleep(1)  # Delay to show feedback
+            st.rerun()
+        else:
+            st.warning("Por favor, selecciona una nota antes de enviar.")
 
 # -------------------------------
 # RESULTADO FINAL Y LEADERBOARD
