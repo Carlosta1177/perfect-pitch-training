@@ -1,2 +1,3 @@
 streamlit
-plt
+matplotlib
+numpy
