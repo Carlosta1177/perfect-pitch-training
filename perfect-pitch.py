@@ -15,8 +15,8 @@ st.set_page_config(
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={
-        'Get Help': 'https://www.example.com/help',
-        'Report a bug': 'https://www.example.com/bug',
+        'Get Help': 'https://carlosta33.wordpress.com/',
+        'Report a bug': 'https://carlosta33.wordpress.com/',
         'About': "### Entrenador Auditivo Pro - ¡Mejora tu oído musical!"
     }
 )
@@ -239,7 +239,7 @@ with st.sidebar:
     st.markdown("---")
     st.markdown(TEXTS[st.session_state.language]["instructions"])
     st.markdown("---")
-    st.caption("Desarrollado con ❤️ por [Tu Nombre o xAI]" if st.session_state.language == "Español" else "Developed with ❤️ by [Your Name or xAI]")
+    st.caption("Desarrollado con ❤️ por [Tu Nombre o xAI]" if st.session_state.language == "Español" else "Developed with ❤️ by Carlos T.A.")
 
 # Main content
 col1, col2 = st.columns([2, 1])
@@ -339,11 +339,6 @@ st.markdown("""
         border-radius: 5px;
         padding: 10px;
         border: none;
-    }
-    .stSelectbox {
-        background-color: #2f2f2f;
-        color: #d3d3d3;
-        border-radius: 5px;
     }
     .stProgress > div > div {
         background-color: #4a704a;
